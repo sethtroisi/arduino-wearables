@@ -1,5 +1,12 @@
 #pragma once
 
+#define WS2801_STRIP false
+#if WS2801_STRIP
+#include <Adafruit_WS2801.h>
+#else
+#include <Adafruit_NeoPixel.h>
+#endif
+
 // Elsewhere we always refer to the pixel count as strip.numPixels().
 const size_t NUM_PIXELS = 50;
 
@@ -7,45 +14,38 @@ const uint8_t dataPin  = 4;
 const uint8_t clockPin = 5;
 const uint8_t inputPin = 14;
 
+#if WS2801_STRIP
 Adafruit_WS2801 strip = Adafruit_WS2801(NUM_PIXELS, dataPin, clockPin);
+#else
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_PIXELS, 4, NEO_RGB + NEO_KHZ800);
+#endif
 
-int8_t switchBrightnessFactors[] = {
+const int8_t BRIGHTNESS_FACTORS[] = {
   // disable full brightness
-  1, // full brightness
-  2, // half
-  8, // eighth
- -1, // off
+  255 / 2, // full brightness
+  128 / 2, // half <- (default when bandolier comes on)
+  32 / 2,  // eighth
+  16 / 2,  // sixteenth
+  0, // off
 };
-
-byte MAX_BRIGHT = 255;
-
-size_t brightnessIndex = 0;
-size_t brightnessCount = sizeof(switchBrightnessFactors) / sizeof(switchBrightnessFactors[0]);
+const size_t brightnessCount = sizeof(BRIGHTNESS_FACTORS) / sizeof(BRIGHTNESS_FACTORS[0]);
+size_t brightnessIndex = 1; // Start a little less than full bright
+// global used to more easily set brightness
+byte brightnessLevel = BRIGHTNESS_FACTORS[brightnessIndex];
 
 void changeBrightness() {
   // TODO Turn off the WiFi radio when brightnessFactor is -1.
   brightnessIndex = (brightnessIndex + 1) % brightnessCount;
+  brightnessLevel = BRIGHTNESS_FACTORS[brightnessIndex];
+  strip.setBrightness(brightnessLevel);
 }
 
 // Create a 24 bit color value from R,G,B
-uint32_t Color(byte rgb[], byte brightness)
+uint32_t Color(byte rgb[])
 {
-  size_t switchBrightnessFactor = switchBrightnessFactors[brightnessIndex];
-  if (switchBrightnessFactor < 0) {
-    return 0;
-  }
-
-  byte r = rgb[0];
-  byte g = rgb[1];
-  byte b = rgb[2];
-  
-  uint32_t c;
-  c = r / switchBrightnessFactor * brightness / MAX_BRIGHT;
-  c <<= 8;
-  c |= g / switchBrightnessFactor * brightness / MAX_BRIGHT;
-  c <<= 8;
-  c |= b / switchBrightnessFactor * brightness / MAX_BRIGHT;
-  return c;
+  // https://adafruit.github.io/Adafruit_NeoPixel/html/class_adafruit___neo_pixel.html
+  // https://learn.adafruit.com/fancyled-library-for-circuitpython/led-colors
+  return Adafruit_NeoPixel::Color(rgb[0], rgb[1], rgb[2]);
 }
 
 void setRGB(byte r, byte g, byte b, byte rgb[]) {
@@ -54,10 +54,10 @@ void setRGB(byte r, byte g, byte b, byte rgb[]) {
   rgb[2] = b;
 }
 
-void clear() {
+void clearStrip() {
   for (int i = 0; i < strip.numPixels(); i++) {
     byte rgb[] = {0, 0, 0};
-    strip.setPixelColor(i, Color(rgb, 0));
+    strip.setPixelColor(i, Color(rgb));
   }
   strip.show();
 }

@@ -11,7 +11,7 @@ typedef struct {
   size_t ledIndex;
   size_t meshCount;
   size_t meshIndex;
-  int8_t dimnessFactor;
+  int8_t dimnessFactor; // Not used?
 } AnimationState;
 
 unsigned long lastAnimationTimeMs = 0;
@@ -29,12 +29,12 @@ size_t computeRank() {
   return rank;
 }
 
-// Return a brightness value 0-255 based on the time.
-// Pulse such that we are at full brightness 50% of the time
-// with a linear shifting up and down from that.
-byte brightnessPulse(uint32_t timeMs) {
-  double sinFactor = (sin(3.14159 * timeMs / 1000) + 1.) / 2.;
-  return round(sinFactor * MAX_BRIGHT);
+// Return a brightness value 0-1 based on the time.
+// Pulse is a sine wave of period 1s, magnitude 10% to 90%.
+// TODO consider correcting brightness to percieved brightness
+double brightnessPulse(uint32_t timeMs) {
+  double sinFactor = sin(3.14159 * timeMs / 1000);
+  return (0.9 * sinFactor + 1.) / 2.;
 }
 
 void animate(void (*fn)(AnimationState*, byte[3])) {
@@ -57,18 +57,19 @@ void animate(void (*fn)(AnimationState*, byte[3])) {
     .meshIndex = computeRank()
   };
 
-
   // Steady glow if we are the only node
-  byte brightness = MAX_BRIGHT;
+  // Needs to stack with brightnessLevel in common.h
+  byte brightness = brightnessLevel;
   if (otherNodesCount > 0) {
     // Otherwise pulse the color.
-    brightness = brightnessPulse(state.timeMs);
+    brightness = brightness * brightnessPulse(state.timeMs);
   }
+  strip.setBrightness(brightness);
 
   byte rgb[] = { 0, 0, 0 };
   while (state.ledIndex < state.ledCount) {
     fn(&state, rgb);
-    strip.setPixelColor(state.ledIndex, Color(rgb, brightness));
+    strip.setPixelColor(state.ledIndex, Color(rgb));
     state.ledIndex += 1;
   }
 

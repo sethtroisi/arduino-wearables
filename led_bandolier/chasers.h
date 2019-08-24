@@ -7,8 +7,7 @@ byte MY_COLORS[][3] = {
   {255, 0, 0},
   {0, 0, 255},
 };
-// TODO: someone better at C could keep this in sync automatically.
-byte NUM_COLORS = 2;
+byte NUM_COLORS = sizeof(MY_COLORS) / sizeof(MY_COLORS[0]);
 
 // Input a value 0 to 255 to get a color bytearray [r,g,b].
 void ChaserWheel(byte WheelPos, byte rgb[]) {

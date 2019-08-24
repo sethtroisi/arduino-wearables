@@ -1,4 +1,3 @@
-#include "Adafruit_WS2801.h"
 #include "SPI.h"
 
 #include "common.h"
@@ -8,8 +7,11 @@
 
 void setup() {
   Serial.begin(115200);
+
+  strip.setBrightness(brightnessLevel);
   strip.begin();
-  clear();
+  clearStrip();
+
   pinMode(0, OUTPUT);
   pinMode(inputPin, INPUT);
   modeSetup();

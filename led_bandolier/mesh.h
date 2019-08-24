@@ -30,4 +30,3 @@ size_t meshGetNodes(std::list<uint32_t> &nodes) {
   nodes = mesh.getNodeList();
   return nodes.size();
 }
-
