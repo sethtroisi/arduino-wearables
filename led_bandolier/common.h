@@ -17,16 +17,17 @@ const uint8_t inputPin = 14;
 #if WS2801_STRIP
 Adafruit_WS2801 strip = Adafruit_WS2801(NUM_PIXELS, dataPin, clockPin);
 #else
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_PIXELS, 4, NEO_RGB + NEO_KHZ800);
+// Only need one pin, dataPin (4 on the corner) makes way more sense but I messed up Amanada's so here we are.
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_PIXELS, clockPin, NEO_RGB + NEO_KHZ800);
 #endif
 
 const int8_t BRIGHTNESS_FACTORS[] = {
   // disable full brightness
-  255 / 2, // full brightness
-  128 / 2, // half <- (default when bandolier comes on)
-  32 / 2,  // eighth
-  16 / 2,  // sixteenth
-  0, // off
+  255 / 4,  // full brightness
+  255 / 6,  // less bright <- (default when bandolier comes on)
+  255 / 8,  // even less
+  255 / 12, // even even less
+  0,        // off
 };
 const size_t brightnessCount = sizeof(BRIGHTNESS_FACTORS) / sizeof(BRIGHTNESS_FACTORS[0]);
 size_t brightnessIndex = 1; // Start a little less than full bright
